@@ -1,0 +1,122 @@
+[
+  {
+    "codigo_cliente": "CTI-001",
+    "nome_cliente": "Metalúrgica Vale do Aço Ltda",
+    "consultor": "ANA SOUZA",
+    "segmento": "IND.",
+    "nivel_cliente": "A",
+    "faturamento_anual": "R$ 4.850.000,00",
+    "servicos_contratados": "Internet Dedicada; Firewall; Cloud; Backup",
+    "data_contratacao": "15/01/2025",
+    "cidade": "Campinas",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-002",
+    "nome_cliente": "Supermercados Bom Preço",
+    "consultor": "carlos mendes",
+    "segmento": "Comércio",
+    "nivel_cliente": "B",
+    "faturamento_anual": "1850000.50",
+    "servicos_contratados": "Link Empresarial; Backup",
+    "data_contratacao": "2025-02-10",
+    "cidade": "Campinas",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-003",
+    "nome_cliente": "Hospital Santa Clara",
+    "consultor": "Ana Souza",
+    "segmento": "saude",
+    "nivel_cliente": "A",
+    "faturamento_anual": "6200000.00",
+    "servicos_contratados": "Internet Dedicada; MPLS; Firewall; Cloud; Backup",
+    "data_contratacao": "2025-01-22",
+    "cidade": "São Paulo",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-004",
+    "nome_cliente": "Colégio Horizonte do Saber",
+    "consultor": "mariana da silva",
+    "segmento": "EDU",
+    "nivel_cliente": "C",
+    "faturamento_anual": "540000.00",
+    "servicos_contratados": "Link Empresarial",
+    "data_contratacao": "05/03/2025",
+    "cidade": "Sorocaba",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-005",
+    "nome_cliente": "TechNova Sistemas Digitais",
+    "consultor": "Carlos Mendes",
+    "segmento": "TI",
+    "nivel_cliente": "A",
+    "faturamento_anual": "3900000.00",
+    "servicos_contratados": "Internet Dedicada; Cloud; Firewall",
+    "data_contratacao": "18/03/2025",
+    "cidade": "São Paulo",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-006",
+    "nome_cliente": "Contábil Exata Associados",
+    "consultor": "Mariana da Silva",
+    "segmento": "SERV.",
+    "nivel_cliente": "B",
+    "faturamento_anual": "980000.00",
+    "servicos_contratados": "Link Empresarial; Backup; Cloud",
+    "data_contratacao": "12/04/2025",
+    "cidade": "Jundiaí",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-007",
+    "nome_cliente": "Indústria Química Bandeirantes",
+    "consultor": "Ana Souza",
+    "segmento": "Industrial",
+    "nivel_cliente": "A",
+    "faturamento_anual": "5100000.00",
+    "servicos_contratados": "Internet Dedicada; MPLS; Firewall; Backup",
+    "data_contratacao": "25/04/2025",
+    "cidade": "Campinas",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-008",
+    "nome_cliente": "Rede Farmácias Vida Mais",
+    "consultor": "Carlos Mendes",
+    "segmento": "COM",
+    "nivel_cliente": "B",
+    "faturamento_anual": "1420000.00",
+    "servicos_contratados": "Internet Dedicada; Backup",
+    "data_contratacao": "09/05/2025",
+    "cidade": "Ribeirão Preto",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-009",
+    "nome_cliente": "Clínica Médica Integrada",
+    "consultor": "Mariana da Silva",
+    "segmento": "Saúde",
+    "nivel_cliente": "C",
+    "faturamento_anual": "610000.00",
+    "servicos_contratados": "Link Empresarial; Firewall",
+    "data_contratacao": "20/05/2025",
+    "cidade": "Santos",
+    "uf": "SP"
+  },
+  {
+    "codigo_cliente": "CTI-010",
+    "nome_cliente": "Logística Rápida Express",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel_cliente": "B",
+    "faturamento_anual": "2150000.00",
+    "servicos_contratados": "Internet Dedicada; MPLS; Cloud",
+    "data_contratacao": "03/06/2025",
+    "cidade": "Campinas",
+    "uf": "SP"
+  }
+]
