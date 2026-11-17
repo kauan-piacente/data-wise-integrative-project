@@ -1,0 +1,11 @@
+codigo_cliente,nome_cliente,consultor,segmento,nivel_cliente,faturamento_anual,servicos_contratados,data_contratacao,cidade,uf
+CTI-001,Metalúrgica Vale do Aço Ltda,ANA SOUZA,IND.,A,4850000.00,Internet Dedicada; Firewall; Cloud; Backup,15/01/2025,Campinas,SP
+CTI-002,Supermercados Bom Preço,carlos mendes,Comércio,B,1850000.50,Link Empresarial; Backup,10/02/2025,Campinas,SP
+CTI-003,Hospital Santa Clara,Ana Souza,saude,A,6200000.00,Internet Dedicada; MPLS; Firewall; Cloud; Backup,22/01/2025,São Paulo,SP
+CTI-004,Colégio Horizonte do Saber,mariana da silva,EDU,C,540000.00,Link Empresarial,05/03/2025,Sorocaba,SP
+CTI-005,TechNova Sistemas Digitais,Carlos Mendes,TI,A,3900000.00,Internet Dedicada; Cloud; Firewall,18/03/2025,São Paulo,SP
+CTI-006,Contábil Exata Associados,Mariana da Silva,SERV.,B,980000.00,Link Empresarial; Backup; Cloud,12/04/2025,Jundiaí,SP
+CTI-007,Indústria Química Bandeirantes,Ana Souza,Industrial,A,5100000.00,Internet Dedicada; MPLS; Firewall; Backup,25/04/2025,Campinas,SP
+CTI-008,Rede Farmácias Vida Mais,Carlos Mendes,COM,B,1420000.00,Internet Dedicada; Backup,09/05/2025,Ribeirão Preto,SP
+CTI-009,Clínica Médica Integrada,Mariana da Silva,Saúde,C,610000.00,Link Empresarial; Firewall,20/05/2025,Santos,SP
+CTI-010,Logística Rápida Express,Ana Souza,Serviços,B,2150000.00,Internet Dedicada; MPLS; Cloud,03/06/2025,Campinas,SP
