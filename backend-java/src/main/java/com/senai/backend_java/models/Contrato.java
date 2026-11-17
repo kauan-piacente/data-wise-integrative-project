@@ -1,53 +1,53 @@
 package com.senai.backend_java.models;
 
-import java.math.BigDecimal;         // biblioteca do JPA para mapear a coluna da tabela do banco de dados
-import java.time.LocalDate;         // biblioteca do JPA para mapear a classe como uma entidade do banco de dados
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType; // biblioteca do JPA para mapear a geração de valores da chave primária
-import jakarta.persistence.Enumerated; // biblioteca do JPA para mapear a estratégia de geração de valores da chave primária
-import jakarta.persistence.GeneratedValue;             // biblioteca do JPA para mapear a chave primária da entidade
-import jakarta.persistence.GenerationType;     // biblioteca do JPA para mapear a coluna que representa a chave estrangeira na tabela do banco de dados
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;          // biblioteca do JPA para mapear a tabela do banco de dados
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-@Entity 
-@Table (name = "contrato")
+@Entity
+@Table(name = "contrato")
 public class Contrato {
-  @Id 
-  @GeneratedValue (strategy = GenerationType.IDENTITY)
-  @Column(name = "id_contrato")
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
   private Long idContrato;
 
   @ManyToOne
-  @JoinColumn (name = "id_cliente")
+  @JoinColumn(name = "cliente_id")
   private Cliente cliente;
 
   @ManyToOne
-  @JoinColumn (name = "id_servico")
+  @JoinColumn(name = "servico_id")
   private Servico servico;
 
-  @Column (name = "valor", nullable = false, precision = 15, scale = 2)
-  private BigDecimal valor;
-
-  @Column (name = "data_inicio", nullable = false)
+  @Column(name = "data_contratacao", nullable = false)
   private LocalDate dataInicio;
 
-  @Column (name = "data_fim", nullable = false)
+  @Column(name = "valor", precision = 15, scale = 2)
+  private BigDecimal valor;
+
+  @Column(name = "data_fim")
   private LocalDate dataFim;
 
   @Enumerated(EnumType.STRING)
-  @Column (name = "status")
+  @Column(name = "status")
   private StatusContrato status = StatusContrato.ATIVO;
 
   public Contrato() {
   }
 
   public Contrato(Long idContrato, Cliente cliente, Servico servico, LocalDate dataInicio, LocalDate dataFim,
-    StatusContrato status) {
+      StatusContrato status) {
     this.idContrato = idContrato;
     this.cliente = cliente;
     this.servico = servico;
@@ -111,6 +111,4 @@ public class Contrato {
   public void setValor(BigDecimal valor) {
     this.valor = valor;
   }
-
-  
 }
