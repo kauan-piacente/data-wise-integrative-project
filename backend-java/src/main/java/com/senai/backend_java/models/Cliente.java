@@ -3,50 +3,66 @@ package com.senai.backend_java.models;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.persistence.Column;         // biblioteca do JPA para mapear a coluna da tabela do banco de dados
-import jakarta.persistence.Entity;         // biblioteca do JPA para mapear a classe como uma entidade do banco de dados
-import jakarta.persistence.Enumerated;     // biblioteca do JPA para mapear o atributo como um enumerado no banco de dados
-import jakarta.persistence.EnumType;       // biblioteca do JPA para definir o armazenamento do enumerado
-import jakarta.persistence.GeneratedValue; // biblioteca do JPA para mapear a geração de valores da chave primária
-import jakarta.persistence.GenerationType; // biblioteca do JPA para mapear a estratégia de geração de valores da chave primária
-import jakarta.persistence.Id;             // biblioteca do JPA para mapear a chave primária da entidade
-import jakarta.persistence.JoinColumn;     // biblioteca do JPA para mapear a coluna que representa a chave estrangeira na tabela do banco de dados
-import jakarta.persistence.ManyToOne;      // biblioteca do JPA para mapear o relacionamento muitos para um entre entidades
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;          // biblioteca do JPA para mapear a tabela do banco de dados
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
-@Entity // define a classe como uma entidade do banco de dados
-@Table(name = "cliente") // nome da tabela no banco de dados
-public class Cliente { // define a classe Cliente como uma entidade do banco de dados e herda da classe Pessoa
-  @Id // define o atributo como chave primária
-  @GeneratedValue (strategy = GenerationType.IDENTITY) // define a estratégia de geração do valor da chave primária
-  @Column (name = "id_cliente") // nome da coluna no banco de dados
+@Entity
+@Table(name = "cliente")
+public class Cliente {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
+  private Long idCliente;
 
-  private Long idCliente; // atributo que representa a chave primária da tabela cliente
+  @Column(name = "lote_id")
+  private Long loteId;
 
-  @ManyToOne // define o relacionamento muitos para um com a entidade Consultor
-  @JoinColumn(name="id_consultor", nullable = false) // define a coluna que representa a chave estrangeira na tabela cliente
-  private Consultor consultor; // atributo que representa a chave estrangeira da tabela cliente
+  @Column(name = "codigo_cti", length = 60)
+  private String codigoCti;
+
+  @ManyToOne
+  @JoinColumn(name = "consultor_id", nullable = false)
+  private Consultor consultor;
+
+  @ManyToOne
+  @JoinColumn(name = "segmento_id")
+  private Segmento segmentoRef;
 
   @OneToMany(mappedBy = "cliente")
   private List<Contrato> contratos = new ArrayList<>();
 
-  @Column(name = "nome_empresa", nullable = false) // define a coluna nome_empresa como não nula
-  private String nomeEmpresa; // atributo que representa o nome da empresa do cliente
+  @Column(name = "nome", nullable = false, length = 255)
+  private String nomeEmpresa;
 
-  @Column(name = "segmento", nullable = false) // define a coluna segmento como não nula
-  private String segmento; // atributo que representa o segmento da empresa do cliente
+  @Transient
+  private String segmento;
 
-  @Column (name = "faturamento_anual", nullable = false, precision = 15, scale = 2) // define a coluna faturamento_anual como não nula
-  private BigDecimal faturamentoAnual; // atributo que representa o faturamento anual da empresa do cliente
+  @Column(name = "faturamento_anual", nullable = false, precision = 15, scale = 2)
+  private BigDecimal faturamentoAnual;
 
-  @Enumerated(EnumType.STRING) // define que o atributo nivel será armazenado como uma string no banco de dados
-  @Column(name = "nivel", nullable = false) // define a coluna nivel como não nula
-  private NivelCliente nivel; // atributo que representa o nivel do cliente
+  @Enumerated(EnumType.STRING)
+  @Column(name = "nivel", nullable = false, length = 5)
+  private NivelCliente nivel;
 
-  @Enumerated(EnumType.STRING) // define que o atributo status será armazenado como uma string no banco de dados
-  @Column(name = "status", nullable = false) // define a coluna status como não nula
-  private StatusCliente status = StatusCliente.ATIVO; // atributo que representa o status do cliente
+  @Column(name = "cidade", length = 120)
+  private String cidade;
+
+  @Column(name = "uf", length = 2)
+  private String uf;
+
+  @Transient
+  private StatusCliente status = StatusCliente.ATIVO;
 
   public Cliente() {
   }
@@ -61,7 +77,6 @@ public class Cliente { // define a classe Cliente como uma entidade do banco de 
     this.status = status;
   }
 
-  // Getters e Setters
   public Long getIdCliente() {
     return idCliente;
   }
@@ -70,12 +85,36 @@ public class Cliente { // define a classe Cliente como uma entidade do banco de 
     this.idCliente = idCliente;
   }
 
+  public Long getLoteId() {
+    return loteId;
+  }
+
+  public void setLoteId(Long loteId) {
+    this.loteId = loteId;
+  }
+
+  public String getCodigoCti() {
+    return codigoCti;
+  }
+
+  public void setCodigoCti(String codigoCti) {
+    this.codigoCti = codigoCti;
+  }
+
   public Consultor getConsultor() {
     return consultor;
   }
 
   public void setConsultor(Consultor consultor) {
     this.consultor = consultor;
+  }
+
+  public Segmento getSegmentoRef() {
+    return segmentoRef;
+  }
+
+  public void setSegmentoRef(Segmento segmentoRef) {
+    this.segmentoRef = segmentoRef;
   }
 
   public String getNomeEmpresa() {
@@ -87,7 +126,8 @@ public class Cliente { // define a classe Cliente como uma entidade do banco de 
   }
 
   public String getSegmento() {
-    return segmento;
+    if (segmento != null) return segmento;
+    return segmentoRef != null ? segmentoRef.getNome() : null;
   }
 
   public void setSegmento(String segmento) {
@@ -110,6 +150,22 @@ public class Cliente { // define a classe Cliente como uma entidade do banco de 
     this.nivel = nivel;
   }
 
+  public String getCidade() {
+    return cidade;
+  }
+
+  public void setCidade(String cidade) {
+    this.cidade = cidade;
+  }
+
+  public String getUf() {
+    return uf;
+  }
+
+  public void setUf(String uf) {
+    this.uf = uf;
+  }
+
   public StatusCliente getStatus() {
     return status;
   }
@@ -125,5 +181,4 @@ public class Cliente { // define a classe Cliente como uma entidade do banco de 
   public void setContratos(List<Contrato> contratos) {
     this.contratos = contratos;
   }
-  
 }
