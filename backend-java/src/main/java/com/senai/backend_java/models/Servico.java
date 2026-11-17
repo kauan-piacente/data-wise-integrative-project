@@ -1,31 +1,31 @@
 package com.senai.backend_java.models;
 
-import java.util.ArrayList;         // biblioteca do JPA para mapear a coluna da tabela do banco de dados
-import java.util.List;         // biblioteca do JPA para mapear a classe como uma entidade do banco de dados
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.Column; // biblioteca do JPA para mapear a geração de valores da chave primária
-import jakarta.persistence.Entity; // biblioteca do JPA para mapear a estratégia de geração de valores da chave primária
-import jakarta.persistence.GeneratedValue;             // biblioteca do JPA para mapear a chave primária da entidade
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;          // biblioteca do JPA para mapear a tabela do banco de dados
+import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "servico")
 public class Servico {
-  @Id 
-  @GeneratedValue (strategy = GenerationType.IDENTITY)
-  @Column(name = "id_servico")
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
   private Long idServico;
 
-  @Column (name = "nome", length = 150, nullable = false)
+  @Column(name = "nome", length = 120, nullable = false, unique = true)
   private String nomeServico;
 
-  @Column (name = "descricao", nullable = false)
+  @Column(name = "descricao")
   private String descricao;
 
-  @Column(name = "categoria", length = 100, nullable = false)
+  @Column(name = "categoria", length = 100)
   private String categoria;
 
   @OneToMany(mappedBy = "servico")
@@ -39,7 +39,9 @@ public class Servico {
     this.nomeServico = nomeServico;
     this.descricao = descricao;
     this.categoria = categoria;
-    this.contratos.add(contrato);
+    if (contrato != null) {
+      this.contratos.add(contrato);
+    }
   }
 
   public Long getIdServico() {
@@ -81,6 +83,4 @@ public class Servico {
   public void setContratos(List<Contrato> contratos) {
     this.contratos = contratos;
   }
-
-  
 }
