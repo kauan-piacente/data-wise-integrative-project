@@ -1,34 +1,34 @@
 package com.senai.backend_java.models;
 
-import java.util.ArrayList;                // biblioteca do Java para utilizar listas
-import java.util.List;                     // biblioteca do Java para utilizar listas
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.Column;         // biblioteca do JPA para mapear a coluna da tabela do banco de dados
-import jakarta.persistence.Entity;         // biblioteca do JPA para mapear a classe como uma entidade do banco de dados
-import jakarta.persistence.GeneratedValue; // biblioteca do JPA para mapear a geração de valores da chave primária
-import jakarta.persistence.GenerationType; // biblioteca do JPA para mapear a estratégia de geração de valores da chave primária
-import jakarta.persistence.Id;             // biblioteca do JPA para mapear a chave primária da entidade
-import jakarta.persistence.OneToMany;      // biblioteca do JPA para mapear o relacionamento um para muitos entre entidades
-import jakarta.persistence.Table;          // biblioteca do JPA para mapear a tabela do banco de dados
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "consultor")
 public class Consultor {
-  @Id 
+  @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column (name = "id_consultor")
+  @Column(name = "id")
   private Long idConsultor;
 
-  @Column (name = "nome", nullable = false, length = 150)
+  @Column(name = "nome", nullable = false, length = 120, unique = true)
   private String nome;
 
-  @Column (name = "email", nullable = false, length = 150, unique = true)
+  @Column(name = "email", length = 150, unique = true)
   private String email;
 
-  @Column (name = "senha", nullable = false)
+  @Column(name = "senha")
   private String senha;
 
-  @Column (name = "telefone", nullable = false, length = 30)
+  @Column(name = "telefone", length = 30)
   private String telefone;
 
   @OneToMany(mappedBy = "consultor")
@@ -77,11 +77,11 @@ public class Consultor {
     this.telefone = telefone;
   }
 
-  public List <Cliente> getClientes() {
+  public List<Cliente> getClientes() {
     return clientes;
   }
 
-  public void setClientes(List <Cliente> clientes) {
+  public void setClientes(List<Cliente> clientes) {
     this.clientes = clientes;
   }
 
