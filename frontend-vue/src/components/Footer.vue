@@ -16,7 +16,7 @@ const companyLinks = [
 </script>
 
 <template>
-  <footer class="bg-gradient-to-b from-[#ececec] via-white to-white pt-20 pb-10 px-8 md:px-[400px]">
+  <footer class="bg-gradient-to-b from-[#ececec] via-white to-white pt-20 pb-10 px-page">
 
     <!-- Parte superior: marca + navegação -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 lg:gap-16 pb-16">
