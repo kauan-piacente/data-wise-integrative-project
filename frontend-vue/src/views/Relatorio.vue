@@ -17,7 +17,7 @@ const qualidadeEtl = computed(() => upload.estatisticas?.qualidade || null);
 <template>
     <AppHeader />
 
-    <main class="bg-[#f8fafc] min-h-screen px-6 py-12 md:px-[220px] xl:px-[360px]">
+    <main class="bg-[#f8fafc] min-h-screen px-page py-12">
         <div class="flex justify-between items-end mb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-palette-chumbo">Relatório de Validação e Qualidade</h1>
