@@ -23,13 +23,13 @@ async function aoSelecionaArquivo(event) {
 <template>
     <AppHeader />
 
-    <main class="bg-[#f8fafc] min-h-screen md:px-[220px] xl:px-[360px] pb-12">
+    <main class="bg-[#f8fafc] min-h-screen px-page pb-12">
         <!-- Section para importar arquivos -->
-        <section class="px-8 py-12 pt-10">
+        <section class="py-8 sm:py-10">
             <input ref="fileInput" type="file" class="hidden" accept=".xlsx, .xls, .csv" @change="aoSelecionaArquivo" />
             <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
                 <div>
-                    <h1 class="text-4xl font-extrabold text-palette-chumbo leading-tight mb-1">Upload do arquivo</h1>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold text-palette-chumbo leading-tight mb-1">Upload do arquivo</h1>
                     <h2 class="text-base font-light text-palette-chumbo leading-tight">
                         Clique para carregar a planilha e processar automaticamente no ETL em Python
                     </h2>
@@ -70,12 +70,12 @@ async function aoSelecionaArquivo(event) {
 
             <!-- Cards de Histórico de Arquivos -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8" v-if="upload.historicoArquivos.length > 0">
-                <div v-for="arq in upload.historicoArquivos" :key="arq.id" class="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                <div v-for="arq in upload.historicoArquivos.slice(0, 4)" :key="arq.id" class="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
                     <div class="bg-[#1FB35B] text-white text-[10px] font-bold rounded flex items-center justify-center w-10 h-10 uppercase">
                         {{ arq.extensao }}
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-palette-chumbo">{{ arq.nome }}</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-palette-chumbo truncate">{{ arq.nome }}</p>
                         <div class="flex flex-wrap items-center text-xs text-gray-500 mt-1 gap-2">
                             <span v-if="arq.status === 'Completo'">
                                 {{ formatarTamanho(arq.tamanhoBytes) }}
@@ -106,13 +106,14 @@ async function aoSelecionaArquivo(event) {
                     </div>
                 </div>
             </div>
+            <RouterLink v-if="upload.historicoArquivos.length > 0" to="/historico" class="inline-block mt-4 text-sm font-semibold text-[#52796F] hover:underline">Ver histórico completo →</RouterLink>
         </section>
 
         <!-- Tabela de Apresentação de Dados -->
-        <section v-if="upload.dadosTratados.length > 0" class="px-8">
+        <section v-if="upload.dadosTratados.length > 0">
             <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
                 <h3 class="text-xl font-bold text-palette-chumbo">Dados Importados</h3>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <RouterLink to="/dashboard" class="bg-palette-mid-green text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#6ba88a]">
                         Ir para Dashboard
                     </RouterLink>
