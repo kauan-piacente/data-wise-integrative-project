@@ -6,12 +6,14 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.senai.backend_java.dto.AtualizarPerfilRequest;
 import com.senai.backend_java.dto.CadastroRequest;
 import com.senai.backend_java.dto.LoginRequest;
 import com.senai.backend_java.dto.LoginResponse;
@@ -48,6 +50,11 @@ public class AuthController {
   public UsuarioResponse me(Principal principal){
     Usuario user = repository.findByEmailIgnoreCase(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     return  UsuarioResponse.de(user);
+  }
+
+  @PutMapping("/auth/me")
+  public LoginResponse atualizarMe(Principal principal, @Valid @RequestBody AtualizarPerfilRequest dados){
+    return service.atualizarPerfil(principal.getName(), dados);
   }
 
   @GetMapping("/public")
