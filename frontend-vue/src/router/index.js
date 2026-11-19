@@ -10,6 +10,7 @@ import Relatorio from '../views/Relatorio.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Insights from '../views/Insights.vue'
 import Perfil from '../views/Perfil.vue'
+import Historico from '../views/Historico.vue'
 import { useAuthStore, MODO_SEM_BACKEND } from '../store/authStore'
 
 const routes = [
@@ -23,6 +24,7 @@ const routes = [
     { path : '/uploads', component: Upload, meta: { requerAuth: true }},
     { path : '/insights', component: Insights, meta: { requerAuth: true }},
     { path : '/perfil', component: Perfil, meta: { requerAuth: true }},
+    { path : '/historico', component: Historico, meta: { requerAuth: true }},
     { path : '/relatorio', component: Relatorio, meta: { requerAuth: true }}
 ]
 

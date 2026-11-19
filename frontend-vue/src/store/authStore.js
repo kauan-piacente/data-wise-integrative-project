@@ -113,6 +113,85 @@ export const useAuthStore = defineStore("auth", {
             }
         },
 
+        // Busca os dados completos do usuário logado (id, perfil, status, criadoEm) em /api/auth/me
+        async carregarPerfil() {
+            if (!this.token || this.token === "token-local") return false
+            try {
+                const resposta = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${this.token}` } })
+                if (!resposta.ok) return false
+                const dados = await resposta.json()
+                this.usuario = { ...this.usuario, ...dados }
+                localStorage.setItem("usuario", JSON.stringify(this.usuario))
+                return true
+            } catch {
+                return false
+            }
+        },
+
+        // Atualiza nome e e-mail no backend Java (PUT /api/auth/me) e renova o token JWT quando retornado
+        async atualizarPerfil(nome, email) {
+            const nomeLimpo = String(nome ?? "").trim()
+            const emailLimpo = String(email ?? "").trim().toLowerCase()
+
+            if (!this.token || this.token === "token-local") {
+                if (MODO_SEM_BACKEND) {
+                    this.usuario = { ...this.usuario, nome: nomeLimpo, email: emailLimpo }
+                    localStorage.setItem("usuario", JSON.stringify(this.usuario))
+                    return { ok: true, local: true }
+                }
+                return { ok: false, erro: "Sessão não autenticada. Faça login novamente." }
+            }
+
+            try {
+                const resposta = await fetch(`${API_URL}/auth/me`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${this.token}`,
+                    },
+                    body: JSON.stringify({ nome: nomeLimpo, email: emailLimpo }),
+                })
+
+                if (!resposta.ok) {
+                    let detalhe = ""
+                    try {
+                        const errJson = await resposta.json()
+                        detalhe = errJson.erro || errJson.mensagem || ""
+                    } catch {
+                        // ignora erro de parse
+                    }
+                    if (resposta.status === 409) {
+                        return { ok: false, erro: detalhe || "Este e-mail já está em uso por outra conta." }
+                    }
+                    if (resposta.status === 401) {
+                        return { ok: false, erro: "Sessão expirada. Faça login novamente." }
+                    }
+                    if (resposta.status === 400) {
+                        return { ok: false, erro: detalhe || "Dados inválidos. Verifique nome e e-mail." }
+                    }
+                    return { ok: false, erro: detalhe || "Erro ao atualizar perfil. Tente novamente." }
+                }
+
+                const dados = await resposta.json()
+                if (dados.token) {
+                    this.token = dados.token
+                    localStorage.setItem("token", this.token)
+                }
+                this.usuario = dados.usuario
+                    ? { ...this.usuario, ...dados.usuario }
+                    : { ...this.usuario, nome: nomeLimpo, email: emailLimpo }
+                localStorage.setItem("usuario", JSON.stringify(this.usuario))
+                return { ok: true, local: false }
+            } catch {
+                if (MODO_SEM_BACKEND) {
+                    this.usuario = { ...this.usuario, nome: nomeLimpo, email: emailLimpo }
+                    localStorage.setItem("usuario", JSON.stringify(this.usuario))
+                    return { ok: true, local: true }
+                }
+                return { ok: false, erro: "Não foi possível conectar ao servidor." }
+            }
+        },
+
         logout() {
             this.token = null
             this.usuario = null

@@ -6,11 +6,11 @@ import { API_URL, ETL_API_URL } from "./authStore"
 const CAMPOS = [
     { chave: "codigo_cliente", rotulo: "Código Cliente", obrigatorio: true },
     { chave: "nome_cliente", rotulo: "Nome Cliente", obrigatorio: true },
-    { chave: "consultor", rotulo: "Consultor", obrigatorio: false },
-    { chave: "segmento", rotulo: "Segmento", obrigatorio: false },
+    { chave: "consultor", rotulo: "Consultor", obrigatorio: true },
+    { chave: "segmento", rotulo: "Segmento", obrigatorio: true },
     { chave: "nivel_cliente", rotulo: "Nível", obrigatorio: true },
-    { chave: "faturamento_anual", rotulo: "Faturamento Anual", obrigatorio: false },
-    { chave: "servicos_contratados", rotulo: "Serviços Contratados", obrigatorio: false },
+    { chave: "faturamento_anual", rotulo: "Faturamento Anual", obrigatorio: true },
+    { chave: "servicos_contratados", rotulo: "Serviços Contratados", obrigatorio: true },
     { chave: "data_contratacao", rotulo: "Data Contratação", obrigatorio: true },
     { chave: "cidade", rotulo: "Cidade", obrigatorio: false },
     { chave: "uf", rotulo: "UF", obrigatorio: false },
@@ -100,18 +100,179 @@ export function formatarDataHora(data) {
 }
 
 export function formatarMoeda(valor) {
-    if (valor === null || valor === undefined || Number.isNaN(Number(valor))) return "R$ 0,00"
+    if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "—"
     return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 }
 
+export function formatarMoedaCompacta(valor) {
+    if (valor === null || valor === undefined || Number.isNaN(Number(valor))) return "—"
+    return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 })
+}
+
+export function formatarMes(mes) {
+    const [a, m] = String(mes).split("-").map(Number)
+    if (!a || !m) return String(mes)
+    return new Date(a, m - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(". de ", "/").replace(" de ", "/")
+}
+
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// ---------------------------------------------------------------------------
+// Estatísticas locais: calculadas no navegador a partir das linhas válidas da
+// planilha quando os serviços Java/Python não estão disponíveis. Usam apenas
+// os valores reais lidos do arquivo (nenhum valor padrão é inventado).
+// ---------------------------------------------------------------------------
+const SEGMENTO_CANONICO = {
+    ind: "Indústria", industria: "Indústria", industrial: "Indústria",
+    com: "Comércio", comercio: "Comércio", comercial: "Comércio",
+    serv: "Serviços", servico: "Serviços", servicos: "Serviços",
+    saude: "Saúde",
+    edu: "Educação", educacao: "Educação",
+    tec: "Tecnologia", ti: "Tecnologia", tecnologia: "Tecnologia",
+}
+
+function titulo(texto) {
+    const minusculas = new Set(["da", "de", "do", "das", "dos", "e"])
+    return String(texto || "").toLowerCase().split(" ").filter(Boolean)
+        .map((p, i) => (i > 0 && minusculas.has(p) ? p : p[0].toUpperCase() + p.slice(1)))
+        .join(" ")
+}
+
+export function parseNumero(valor) {
+    let s = String(valor ?? "").replace(/R\$|\u00A0|\s/g, "")
+    if (!s || !/^-?[0-9.,]+$/.test(s)) return null
+    if (s.includes(",") && s.includes(".")) {
+        s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "")
+    } else if (s.includes(",")) {
+        s = (s.match(/,/g) || []).length > 1 ? s.replace(/,/g, "") : s.replace(",", ".")
+    } else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) {
+        s = s.replace(/\./g, "")
+    }
+    const n = Number(s)
+    return Number.isFinite(n) ? n : null
+}
+
+function mesDaData(texto) {
+    const t = String(texto || "")
+    let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}`
+    m = t.match(/^(\d{4})-(\d{2})/)
+    return m ? `${m[1]}-${m[2]}` : null
+}
+
+const pct = (parte, todo) => (todo ? Math.round((1000 * parte) / todo) / 10 : 0)
+
+function agrupar(linhas, chaveFn, nome, totalFat) {
+    const grupos = {}
+    linhas.forEach((l) => {
+        const k = chaveFn(l)
+        if (!k) return
+        grupos[k] ??= { clientes: 0, fat: 0, comFat: 0 }
+        grupos[k].clientes++
+        if (l.fat !== null) { grupos[k].fat += l.fat; grupos[k].comFat++ }
+    })
+    return Object.entries(grupos)
+        .map(([k, g]) => ({
+            [nome]: k,
+            clientes: g.clientes,
+            percentual: pct(g.clientes, linhas.length),
+            faturamentoTotal: g.comFat ? g.fat : null,
+            percentualFaturamento: g.comFat ? pct(g.fat, totalFat) : null,
+            media: g.comFat ? g.fat / g.comFat : null,
+        }))
+        .sort((a, b) => b.clientes - a.clientes || String(a[nome]).localeCompare(b[nome]))
+}
+
+function calcularEstatisticasLocais(validas, totalRecebidas) {
+    if (!validas.length) return null
+    const linhas = validas.map((l) => ({
+        ...l,
+        fat: parseNumero(l.faturamento_anual),
+        seg: l.segmento ? (SEGMENTO_CANONICO[simplesSemPontuacao(l.segmento).replace(/\s/g, "")] || titulo(l.segmento)) : null,
+        cons: l.consultor ? titulo(l.consultor) : null,
+        servicos: String(l.servicos_contratados || "").split(/[;,|]/).map((s) => s.trim()).filter(Boolean),
+        mes: mesDaData(l.data_contratacao),
+    }))
+    const fats = linhas.map((l) => l.fat).filter((f) => f !== null).sort((a, b) => a - b)
+    const totalFat = fats.reduce((a, b) => a + b, 0)
+    const mediana = fats.length ? (fats.length % 2 ? fats[(fats.length - 1) / 2] : (fats[fats.length / 2 - 1] + fats[fats.length / 2]) / 2) : null
+
+    const porNivel = agrupar(linhas, (l) => l.nivel_cliente, "nivel", totalFat).sort((a, b) => a.nivel.localeCompare(b.nivel))
+    const porSegmento = agrupar(linhas, (l) => l.seg, "segmento", totalFat)
+    const porConsultor = agrupar(linhas, (l) => l.cons, "consultor", totalFat)
+    const porCidade = agrupar(linhas, (l) => l.cidade && titulo(l.cidade), "cidade", totalFat)
+
+    const servicos = {}
+    linhas.forEach((l) => l.servicos.forEach((s) => {
+        servicos[s] ??= { contratos: 0, fat: 0, comFat: 0 }
+        servicos[s].contratos++
+        if (l.fat !== null) { servicos[s].fat += l.fat; servicos[s].comFat++ }
+    }))
+    const porServico = Object.entries(servicos)
+        .map(([s, g]) => ({ servico: s, contratos: g.contratos, percentual: pct(g.contratos, linhas.length), faturamentoMedio: g.comFat ? g.fat / g.comFat : null }))
+        .sort((a, b) => b.contratos - a.contratos)
+
+    // Série mensal contínua (meses sem contratação = 0), igual ao ETL em Python
+    const meses = {}
+    linhas.forEach((l) => { if (l.mes) { meses[l.mes] ??= { clientes: 0, faturamento: 0 }; meses[l.mes].clientes++; meses[l.mes].faturamento += l.fat || 0 } })
+    const chaves = Object.keys(meses).sort()
+    const porMes = []
+    if (chaves.length) {
+        let [a, m] = chaves[0].split("-").map(Number)
+        const [af, mf] = chaves[chaves.length - 1].split("-").map(Number)
+        let acumulado = 0
+        while (a < af || (a === af && m <= mf)) {
+            const k = `${a}-${String(m).padStart(2, "0")}`
+            acumulado += meses[k]?.clientes || 0
+            porMes.push({ mes: k, clientes: meses[k]?.clientes || 0, faturamento: meses[k]?.faturamento || 0, acumulado })
+            m++; if (m > 12) { m = 1; a++ }
+        }
+    }
+
+    const topClientes = linhas.filter((l) => l.fat !== null).sort((a, b) => b.fat - a.fat).slice(0, 5)
+        .map((l) => ({ codigo: l.codigo_cliente, nome: l.nome_cliente, segmento: l.seg, nivel: l.nivel_cliente, faturamento: l.fat, cidade: l.cidade, uf: l.uf }))
+
+    return {
+        origem: "local",
+        resumo: {
+            totalClientes: linhas.length,
+            faturamentoTotal: fats.length ? totalFat : null,
+            media: fats.length ? totalFat / fats.length : null,
+            mediana,
+            minimo: fats[0] ?? null,
+            maximo: fats[fats.length - 1] ?? null,
+            segmentoMaisFrequente: porSegmento[0]?.segmento || null,
+            servicoMaisContratado: porServico[0]?.servico || null,
+            mediaServicosPorCliente: Math.round((linhas.reduce((s, l) => s + l.servicos.length, 0) / linhas.length) * 100) / 100,
+            consultores: porConsultor.length,
+            cidadesAtendidas: porCidade.length,
+            clientesSemFaturamento: linhas.length - fats.length,
+        },
+        porNivel, porSegmento, porConsultor, porCidade, porServico, porMes, topClientes,
+        qualidade: { linhasRecebidas: totalRecebidas, linhasValidas: linhas.length, linhasInvalidas: totalRecebidas - linhas.length },
+    }
+}
+
+const CHAVE_HISTORICO = "datawise:historicoArquivos"
+function lerHistoricoLocal() {
+    try { return JSON.parse(localStorage.getItem(CHAVE_HISTORICO) || "[]") } catch { return [] }
+}
+
+function cabecalhosAuth() {
+    const token = localStorage.getItem("token")
+    return token && token !== "token-local" ? { Authorization: `Bearer ${token}` } : {}
+}
 
 export const useUploadStore = defineStore("upload", {
     state: () => ({
         arquivo: null,
         nomeArquivo: "",
         dataUpload: null,
-        historicoArquivos: [],
+        historicoArquivos: lerHistoricoLocal(),
+        // Lotes registrados no banco (upload_lote), obtidos do backend Java ou da API Python
+        lotes: [],
+        lotesCarregando: false,
+        lotesErro: "",
         progresso: 0,
         carregando: false,
         mensagemErro: "",
@@ -159,6 +320,14 @@ export const useUploadStore = defineStore("upload", {
             })
             return contagem
         },
+
+        // Estatísticas do ETL (Python) quando disponíveis; senão, calculadas localmente das linhas válidas
+        estatisticasAtivas(state) {
+            if (state.estatisticas) return state.estatisticas
+            const bloqueadas = new Set(state.erros.filter((e) => e.bloqueante !== false).map((e) => e.linha))
+            const validas = state.dadosTratados.filter((l) => !bloqueadas.has(l.numeroLinha))
+            return calcularEstatisticasLocais(validas, state.dadosTratados.length)
+        },
     },
 
     actions: {
@@ -173,6 +342,8 @@ export const useUploadStore = defineStore("upload", {
 
         selecionarArquivo(file) {
             this.limpar()
+            this.estatisticas = null
+            this.loteId = null
             this.arquivo = file
             this.nomeArquivo = file.name
             this.dataUpload = new Date()
@@ -187,11 +358,65 @@ export const useUploadStore = defineStore("upload", {
                 progresso: 0,
                 dataUpload: this.dataUpload,
                 mensagemErro: "",
+                totalLinhas: null,
+                linhasValidas: null,
+                linhasComErro: null,
+                avisos: null,
+                loteId: null,
+                destino: null,
             })
-            if (this.historicoArquivos.length > 4) {
+            if (this.historicoArquivos.length > 30) {
                 this.historicoArquivos.pop()
             }
+            this.salvarHistoricoLocal()
             return this.historicoArquivos[0]
+        },
+
+        salvarHistoricoLocal() {
+            try { localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(this.historicoArquivos)) } catch { /* armazenamento indisponível */ }
+        },
+
+        limparHistoricoLocal() {
+            this.historicoArquivos = []
+            this.salvarHistoricoLocal()
+        },
+
+        // Lista os lotes gravados no banco: Java (/api/uploads/lotes) ou Python (/lotes)
+        async carregarLotes() {
+            this.lotesCarregando = true
+            this.lotesErro = ""
+            try {
+                for (const url of [`${API_URL}/uploads/lotes`, `${ETL_API_URL}/lotes`]) {
+                    try {
+                        const resp = await fetch(url, { headers: cabecalhosAuth() })
+                        if (resp.ok) {
+                            this.lotes = await resp.json()
+                            return true
+                        }
+                    } catch { /* tenta o próximo serviço */ }
+                }
+                this.lotesErro = "Não foi possível conectar ao backend Java nem à API Python para consultar os lotes gravados."
+                return false
+            } finally {
+                this.lotesCarregando = false
+            }
+        },
+
+        // Abre um lote específico do banco e torna suas estatísticas as ativas no Dashboard/Insights
+        async abrirLote(id) {
+            for (const url of [`${API_URL}/uploads/${id}`, `${ETL_API_URL}/lotes/${id}`]) {
+                try {
+                    const resp = await fetch(url, { headers: cabecalhosAuth() })
+                    if (resp.ok) {
+                        const dados = await resp.json()
+                        if (!dados?.estatisticas) return false
+                        this.limpar()
+                        this.aplicarLoteRemoto(dados)
+                        return true
+                    }
+                } catch { /* tenta o próximo serviço */ }
+            }
+            return false
         },
 
         marcarErro(item, mensagem) {
@@ -202,6 +427,7 @@ export const useUploadStore = defineStore("upload", {
             if (item) {
                 item.status = "Erro"
                 item.mensagemErro = mensagem
+                this.salvarHistoricoLocal()
             }
         },
 
@@ -241,12 +467,20 @@ export const useUploadStore = defineStore("upload", {
                 item.progresso = 70
                 this.validarDados()
 
+                const bloqueadas = new Set(this.erros.filter((e) => e.bloqueante !== false).map((e) => e.linha))
+                item.totalLinhas = this.dadosTratados.length
+                item.linhasComErro = bloqueadas.size
+                item.linhasValidas = this.dadosTratados.length - bloqueadas.size
+                item.avisos = this.erros.filter((e) => e.bloqueante === false).length
+
                 // Encaminha as linhas válidas para o backend processar no ETL e salvar no PostgreSQL
-                await this.enviarParaBackend()
+                item.destino = await this.enviarParaBackend()
+                item.loteId = this.loteId
 
                 this.progresso = 100
                 item.progresso = 100
                 item.status = "Completo"
+                this.salvarHistoricoLocal()
             } catch (error) {
                 const mensagem = error instanceof ErroValidacaoPlanilha
                     ? error.message
@@ -265,7 +499,7 @@ export const useUploadStore = defineStore("upload", {
             const descartadas = this.dadosTratados.length - validas.length
 
             if (validas.length === 0) {
-                return
+                return null
             }
 
             const payloadJava = {
@@ -275,11 +509,11 @@ export const useUploadStore = defineStore("upload", {
                     numeroLinha: l.numeroLinha,
                     codigoCliente: l.codigo_cliente,
                     nomeCliente: l.nome_cliente,
-                    consultor: l.consultor || "Consultor Geral",
-                    segmento: l.segmento || "Serviços",
+                    consultor: l.consultor || null,
+                    segmento: l.segmento || null,
                     nivelCliente: l.nivel_cliente,
-                    faturamentoAnual: l.faturamento_anual || "100000.00",
-                    servicosContratados: l.servicos_contratados || "Internet Dedicada",
+                    faturamentoAnual: l.faturamento_anual || null,
+                    servicosContratados: l.servicos_contratados || null,
                     dataContratacao: l.data_contratacao,
                     cidade: l.cidade || null,
                     uf: l.uf || null,
@@ -308,7 +542,7 @@ export const useUploadStore = defineStore("upload", {
                         await this.carregarUltimoLote()
                     }
                     this.mensagemSucesso = `ETL concluído no Azure PostgreSQL${this.loteId ? ` (Lote #${this.loteId})` : ""}: ${dados.linhasValidas} clientes processados.`
-                    return
+                    return "java"
                 }
             } catch {
                 // Caso o backend Java não esteja rodando, utiliza a API Python diretamente
@@ -325,11 +559,11 @@ export const useUploadStore = defineStore("upload", {
                         linha: l.numeroLinha,
                         codigo_cliente: l.codigo_cliente,
                         nome_cliente: l.nome_cliente,
-                        consultor: l.consultor || "Consultor Geral",
-                        segmento: l.segmento || "Serviços",
+                        consultor: l.consultor || null,
+                        segmento: l.segmento || null,
                         nivel_cliente: l.nivel_cliente,
-                        faturamento_anual: l.faturamento_anual || "100000.00",
-                        servicos_contratados: l.servicos_contratados || "Internet Dedicada",
+                        faturamento_anual: l.faturamento_anual || null,
+                        servicos_contratados: l.servicos_contratados || null,
                         data_contratacao: l.data_contratacao,
                         cidade: l.cidade || null,
                         uf: l.uf || null,
@@ -345,10 +579,12 @@ export const useUploadStore = defineStore("upload", {
                     this.loteId = dadosPy.loteId || null
                     this.estatisticas = dadosPy.estatisticas || null
                     this.mensagemSucesso = `ETL concluído no Azure PostgreSQL${this.loteId ? ` (Lote #${this.loteId})` : ""}: ${validas.length} clientes processados.`
+                    return "python"
                 }
             } catch {
                 // Se nenhum serviço remoto estiver ativo, preserva a validação local na tela
             }
+            return "local"
         },
 
         async carregarUltimoLote() {
@@ -509,6 +745,25 @@ export const useUploadStore = defineStore("upload", {
 
             if (tratado.data_contratacao && !REGEX_DATA_BR.test(tratado.data_contratacao) && !REGEX_DATA_ISO.test(tratado.data_contratacao)) {
                 this.registrarErro(linha, "Data Contratação", "Dado fora do padrão", `Data "${tratado.data_contratacao}" deve estar em DD/MM/AAAA ou AAAA-MM-DD.`, true)
+            }
+
+            if (tratado.faturamento_anual) {
+                const fat = parseNumero(tratado.faturamento_anual)
+                if (fat === null) {
+                    this.registrarErro(linha, "Faturamento Anual", "Dado fora do padrão", `"${tratado.faturamento_anual}" não é um valor numérico válido.`, true)
+                } else if (fat <= 0) {
+                    this.registrarErro(linha, "Faturamento Anual", "Dado fora do padrão", "Faturamento anual deve ser maior que zero.", true)
+                } else if (fat >= 1e12) {
+                    this.registrarErro(linha, "Faturamento Anual", "Dado fora do padrão", "Faturamento anual acima do limite permitido.", true)
+                }
+            }
+
+            if (tratado.servicos_contratados && tratado.servicos_contratados.split(/[;,|]/).every((s) => !s.trim())) {
+                this.registrarErro(linha, "Serviços Contratados", "Dado fora do padrão", "Nenhum serviço válido informado.", true)
+            }
+
+            if (tratado.uf && !/^[A-Za-z]{2}$/.test(tratado.uf)) {
+                this.registrarErro(linha, "UF", "Dado fora do padrão", `UF "${tratado.uf}" inválida. Use a sigla com 2 letras.`, true)
             }
 
             ;["nome_cliente", "consultor", "cidade"].forEach((chave) => {
