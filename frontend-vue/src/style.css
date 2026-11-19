@@ -21,3 +21,21 @@
   --color-palette-chumbo: #212121;
   --color-palette-offwhite: #F8FAFC;
 }
+
+/* Espaçamento horizontal fluido: margem mínima em telas pequenas e conteúdo
+   centralizado com largura máxima (~1216px) em telas grandes. */
+@utility px-page {
+  padding-inline: max(1rem, calc((100% - 76rem) / 2));
+  @media (width >= 40rem) {
+    padding-inline: max(1.5rem, calc((100% - 76rem) / 2));
+  }
+  @media (width >= 64rem) {
+    padding-inline: max(2rem, calc((100% - 76rem) / 2));
+  }
+}
+
+@utility card {
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(38, 53, 31, 0.09);
+}
