@@ -32,7 +32,7 @@ const features = [
 
     <!-- Primeira Section: Hero -->
     <section
-      class="flex flex-col lg:flex-row items-center justify-between px-8 md:px-[400px] py-16 lg:py-24 bg-[#f8fafc] pt-12 gap-12">
+      class="flex flex-col lg:flex-row items-center justify-between px-page py-16 lg:py-24 bg-[#f8fafc] pt-12 gap-12">
 
       <!-- Coluna da Esquerda: Textos e Call to Action -->
       <div class="flex flex-col items-start w-full lg:w-[55%]">
@@ -69,7 +69,7 @@ const features = [
 
     <!-- Section: Funcionalidades -->
     <section id="funcionalidades" aria-labelledby="features-title"
-      class="flex flex-col items-center px-8 md:px-[400px] py-16 lg:py-24 bg-white">
+      class="flex flex-col items-center px-page py-16 lg:py-24 bg-white">
 
       <header class="flex flex-col items-center text-center mb-12 lg:mb-16">
         <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#4f9474] mb-4">
