@@ -55,7 +55,7 @@ const inputClass = 'w-full px-4 py-2.5 text-sm text-palette-chumbo bg-white bord
   <Header />
 
   <main class="bg-palette-offwhite">
-    <section aria-labelledby="contact-title" class="px-8 md:px-[400px] py-16 lg:py-24">
+    <section aria-labelledby="contact-title" class="px-page py-16 lg:py-24">
 
       <!-- Cabeçalho da página -->
       <header class="flex flex-col items-center text-center mb-12 lg:mb-16">
