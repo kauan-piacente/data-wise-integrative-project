@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.senai.backend_java.config.ApiException;
+import com.senai.backend_java.dto.AtualizarPerfilRequest;
 import com.senai.backend_java.dto.CadastroRequest;
 import com.senai.backend_java.dto.LoginRequest;
 import com.senai.backend_java.dto.LoginResponse;
@@ -76,5 +77,29 @@ public class AuthService {
     }
 
     return new LoginResponse(jwt.gerar(user), "Bearer", UsuarioResponse.de(user));
+  }
+
+  /**
+   * Atualiza nome e e-mail do usuário autenticado e emite um novo token JWT
+   * (necessário caso o e-mail seja alterado, pois ele é o subject do token).
+   *
+   * @throws ApiException 401 se o usuário da sessão não existir; 409 se o novo e-mail já estiver em uso
+   */
+  public LoginResponse atualizarPerfil(String emailAtual, AtualizarPerfilRequest dados) {
+    Usuario user = repository.findByEmailIgnoreCase(emailAtual)
+        .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Sessão inválida. Entre novamente."));
+
+    String novoNome = dados.nome().trim();
+    String novoEmail = dados.email().trim().toLowerCase(Locale.ROOT);
+
+    if (!novoEmail.equalsIgnoreCase(user.getEmail()) && repository.existsByEmailIgnoreCase(novoEmail)) {
+      throw new ApiException(HttpStatus.CONFLICT, "Este e-mail já está cadastrado em outra conta.");
+    }
+
+    user.setNome(novoNome);
+    user.setEmail(novoEmail);
+    Usuario salvo = repository.save(user);
+
+    return new LoginResponse(jwt.gerar(salvo), "Bearer", UsuarioResponse.de(salvo));
   }
 }
