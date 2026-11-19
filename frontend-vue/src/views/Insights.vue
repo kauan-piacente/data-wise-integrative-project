@@ -91,7 +91,7 @@ const estilos = {
 <template>
   <AppHeader />
 
-  <main class="bg-palette-offwhite min-h-screen px-6 py-10 md:px-[220px] xl:px-[360px]">
+  <main class="bg-palette-offwhite min-h-screen px-page py-10">
     <h1 class="text-3xl font-extrabold text-palette-chumbo">
       <span class="text-palette-mid-green">Insights</span> Estratégicos
     </h1>
