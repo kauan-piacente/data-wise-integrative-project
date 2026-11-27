@@ -38,8 +38,8 @@ async function enviar() {
     erroValidacao.value = 'Preencha todos os campos.'
   } else if (!REGEX_EMAIL.test(email.value.trim())) {
     erroValidacao.value = 'Informe um e-mail válido.'
-  } else if (senha.value.length < 8) {
-    erroValidacao.value = 'A senha deve ter pelo menos 8 caracteres.'
+  } else if (!/^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(senha.value)) {
+    erroValidacao.value = 'A senha deve ter de 8 a 72 caracteres com letras e números.'
   } else if (senha.value !== confirmarSenha.value) {
     erroValidacao.value = 'As senhas não coincidem.'
   }
