@@ -14,6 +14,16 @@ CREATE TABLE IF NOT EXISTS usuarios (
     criado_em   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Códigos temporários para recuperação de senha (armazenados sempre com hash BCrypt)
+CREATE TABLE IF NOT EXISTS token_recuperacao_senha (
+    id          BIGSERIAL PRIMARY KEY,
+    usuario_id  BIGINT       NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    codigo_hash VARCHAR(255) NOT NULL,
+    expira_em   TIMESTAMP    NOT NULL,
+    usado       BOOLEAN      NOT NULL DEFAULT FALSE,
+    criado_em   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Registro de cada planilha enviada para processamento no ETL
 CREATE TABLE IF NOT EXISTS upload_lote (
     id                BIGSERIAL PRIMARY KEY,
