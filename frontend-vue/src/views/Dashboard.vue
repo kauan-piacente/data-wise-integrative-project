@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
 import BaseChart from '../components/BaseChart.vue'
+import LoadingSkeleton from '../components/LoadingSkeleton.vue'
 import { useAuthStore } from '../store/authStore'
 import { useUploadStore, formatarMoeda, formatarMoedaCompacta, formatarMes, formatarDataHora } from '../store/uploadStore.js'
 
@@ -176,43 +177,46 @@ const alturaBarras = (n) => `${Math.max(200, n * 42 + 40)}px`
   <main class="bg-palette-offwhite min-h-screen px-page py-8 sm:py-10">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
       <div class="min-w-0">
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-palette-chumbo">
+        <h1 class="page-title">
           Olá<span v-if="primeiroNome">, <span class="text-palette-mid-green">{{ primeiroNome }}</span></span>!
         </h1>
-        <p class="text-palette-gray font-medium mt-1 text-sm sm:text-base">Resumo da carteira de clientes do último arquivo analisado</p>
+        <p class="page-subtitle">Resumo da carteira de clientes da última planilha importada</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <RouterLink to="/historico" class="text-sm font-semibold text-palette-chumbo bg-white px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50">Histórico</RouterLink>
-        <RouterLink to="/insights" class="text-sm font-semibold text-white bg-palette-mid-green px-4 py-2 rounded-lg shadow-sm hover:bg-[#6ba88a]">Ver Insights →</RouterLink>
+        <RouterLink to="/historico" class="text-sm font-medium text-gray-700 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">Histórico</RouterLink>
+        <RouterLink to="/insights" class="text-sm font-semibold text-white bg-palette-mid-green px-4 py-2 rounded-lg hover:bg-[#6ba88a] transition-colors">Ver Insights →</RouterLink>
       </div>
     </div>
 
-    <div v-if="carregando" class="card p-12 text-center text-palette-gray">Buscando o último lote processado...</div>
+    <LoadingSkeleton v-if="carregando" variant="dashboard" />
 
     <!-- Estado vazio -->
     <div v-else-if="!est" class="card p-8 sm:p-12 text-center">
       <p class="text-lg font-semibold text-palette-chumbo mb-2">Nenhum dado importado ainda</p>
-      <p class="text-palette-gray mb-6">Envie sua planilha de clientes para visualizar os indicadores e gráficos da carteira.</p>
-      <RouterLink to="/uploads" class="inline-block bg-palette-mid-green text-white font-semibold px-8 py-3 rounded-lg hover:bg-[#6ba88a] transition-colors shadow-sm">Importar planilha</RouterLink>
+      <p class="text-sm font-light text-gray-500 mb-6">Envie sua planilha de clientes para visualizar os indicadores e gráficos da carteira.</p>
+      <RouterLink to="/uploads" class="inline-block bg-palette-mid-green text-white font-semibold px-8 py-3 rounded-lg hover:bg-[#6ba88a] transition-colors">Importar planilha</RouterLink>
     </div>
 
     <template v-else>
       <!-- Origem dos dados -->
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm mb-6 px-4 py-3 rounded-xl border"
-        :class="origemLocal ? 'bg-palette-light-yellow/60 border-palette-mid-yellow text-palette-brown' : 'bg-white border-gray-200 text-palette-gray'">
-        <span class="font-semibold truncate max-w-full">📄 {{ store.nomeArquivo || 'Arquivo' }}</span>
-        <span v-if="store.loteId">Lote #{{ store.loteId }}</span>
-        <span v-if="store.dataUpload">{{ formatarDataHora(store.dataUpload) }}</span>
-        <span v-if="origemLocal">⚠ Indicadores calculados no navegador (serviços de ETL indisponíveis). Os dados não foram gravados no banco.</span>
-        <span v-else>Indicadores calculados pelo ETL em Python</span>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm mb-6 px-4 py-2.5 rounded-xl border"
+        :class="origemLocal ? 'bg-palette-light-yellow/50 border-palette-mid-yellow text-palette-brown' : 'bg-white border-gray-200/80 text-gray-600'">
+        <span class="font-medium text-palette-chumbo truncate max-w-full">{{ store.nomeArquivo || 'Planilha' }}</span>
+        <span v-if="store.dataUpload" class="text-gray-300">·</span>
+        <span v-if="store.dataUpload" class="font-light text-gray-500">{{ formatarDataHora(store.dataUpload) }}</span>
+        <span class="sm:ml-auto inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+          :class="origemLocal ? 'bg-amber-100 text-amber-800' : 'bg-palette-mid-green/15 text-[#3f5f5a]'">
+          <span class="w-1.5 h-1.5 rounded-full" :class="origemLocal ? 'bg-amber-500' : 'bg-palette-mid-green'"></span>
+          {{ origemLocal ? 'Visualização temporária (não salva na nuvem)' : 'Dados sincronizados' }}
+        </span>
       </div>
 
       <!-- Cards de indicadores -->
       <section class="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <div v-for="card in cards" :key="card.rotulo" class="card p-5 border-l-4 border-palette-mid-green min-w-0">
-          <p class="text-xs sm:text-sm text-palette-gray font-medium">{{ card.rotulo }}</p>
+        <div v-for="card in cards" :key="card.rotulo" class="card p-5 min-w-0 hover:border-palette-mid-green/50 transition-colors">
+          <p class="text-xs font-medium text-gray-500">{{ card.rotulo }}</p>
           <p class="text-2xl font-extrabold mt-2 text-palette-chumbo truncate" :title="card.titulo">{{ card.valor }}</p>
-          <p v-if="card.sub" class="text-xs text-palette-gray mt-1.5">{{ card.sub }}</p>
+          <p v-if="card.sub" class="text-xs font-light text-gray-500 mt-1.5">{{ card.sub }}</p>
         </div>
       </section>
       <p v-if="r.clientesSemFaturamento" class="text-xs text-palette-brown -mt-3 mb-6">
