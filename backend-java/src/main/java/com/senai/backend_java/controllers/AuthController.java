@@ -17,6 +17,8 @@ import com.senai.backend_java.dto.AtualizarPerfilRequest;
 import com.senai.backend_java.dto.CadastroRequest;
 import com.senai.backend_java.dto.LoginRequest;
 import com.senai.backend_java.dto.LoginResponse;
+import com.senai.backend_java.dto.RedefinirSenhaRequest;
+import com.senai.backend_java.dto.SolicitarRecuperacaoRequest;
 import com.senai.backend_java.dto.UsuarioResponse;
 import com.senai.backend_java.models.Usuario;
 import com.senai.backend_java.repositories.UsuarioRepository;
@@ -44,6 +46,16 @@ public class AuthController {
   @PostMapping("/auth/login")
   public LoginResponse login(@Valid @RequestBody LoginRequest dados){
     return service.entrar(dados);
+  }
+
+  @PostMapping("/auth/esqueci-senha")
+  public Map<String, Object> esqueciSenha(@Valid @RequestBody SolicitarRecuperacaoRequest dados){
+    return service.solicitarRecuperacao(dados.email());
+  }
+
+  @PostMapping("/auth/redefinir-senha")
+  public Map<String, String> redefinirSenha(@Valid @RequestBody RedefinirSenhaRequest dados){
+    return service.redefinirSenha(dados);
   }
 
   @GetMapping("/auth/me")
