@@ -114,6 +114,16 @@ def obter_lote(lote_id: int, x_etl_key: str | None = Header(default=None)) -> di
     return dados
 
 
+@app.delete("/lotes/{lote_id}")
+def excluir_lote(lote_id: int, x_etl_key: str | None = Header(default=None)) -> dict:
+    """Remove um lote processado e os registros associados no banco."""
+    _validar_chave(x_etl_key)
+    import banco
+    if not banco.excluir_lote(_engine_azure(), lote_id):
+        raise HTTPException(status_code=404, detail="Planilha não encontrada.")
+    return {"ok": True}
+
+
 @app.post("/testar")
 def testar(linhas: list[dict[str, Any]]) -> dict:
     """Executa a limpeza e o cálculo estatístico em memória, sem gravar nada no banco."""

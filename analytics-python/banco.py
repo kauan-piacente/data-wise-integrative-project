@@ -140,9 +140,9 @@ def gravar_resultado(engine: Engine, lote_id: int, tratado: pd.DataFrame, payloa
         conn.execute(text("INSERT INTO estatistica_lote (lote_id, gerado_em, resultado) VALUES (:l, :g, :r)"),
                      {"l": lote_id, "g": agora_utc(), "r": json.dumps(payload, ensure_ascii=False)})
 
-        mensagem = f"ETL concluído: {len(tratado)} clientes tratados"
+        mensagem = f"Importação concluída: {len(tratado)} clientes analisados"
         if rejeitadas_etl:
-            mensagem += f", {rejeitadas_etl} linhas recusadas na limpeza"
+            mensagem += f", {rejeitadas_etl} linhas ignoradas por inconsistência"
         conn.execute(text("UPDATE upload_lote SET status = 'PROCESSADO', mensagem = :m WHERE id = :id"),
                      {"id": lote_id, "m": mensagem + "."})
     log.info("Lote %s gravado: %s clientes, %s consultores, %s segmentos, %s serviços",
@@ -163,7 +163,7 @@ def listar_lotes(engine: Engine, limite: int = 20) -> list[dict]:
             {
                 "id": int(r["id"]),
                 "arquivoNome": r["arquivo_nome"],
-                "enviadoEm": r["enviado_em"].isoformat() if r["enviado_em"] else None,
+                "enviadoEm": r["enviado_em"].replace(tzinfo=timezone.utc).isoformat() if r["enviado_em"] else None,
                 "status": r["status"],
                 "totalLinhas": int(r["total_linhas"]),
                 "linhasValidas": int(r["linhas_validas"]),
@@ -204,7 +204,7 @@ def buscar_estatistica_lote(engine: Engine, lote_id: int | None = None) -> dict 
         return {
             "loteId": int(row["id"]),
             "arquivoNome": row["arquivo_nome"],
-            "enviadoEm": row["enviado_em"].isoformat() if row["enviado_em"] else None,
+            "enviadoEm": row["enviado_em"].replace(tzinfo=timezone.utc).isoformat() if row["enviado_em"] else None,
             "status": row["status"],
             "totalLinhas": int(row["total_linhas"]),
             "linhasValidas": int(row["linhas_validas"]),
@@ -213,3 +213,10 @@ def buscar_estatistica_lote(engine: Engine, lote_id: int | None = None) -> dict 
             "mensagem": row["mensagem"],
             "estatisticas": estatisticas,
         }
+
+
+def excluir_lote(engine: Engine, lote_id: int) -> bool:
+    """Remove um lote e todos os registros vinculados (clientes, contratos e estatísticas)."""
+    with engine.begin() as conn:
+        res = conn.execute(text("DELETE FROM upload_lote WHERE id = :id"), {"id": lote_id})
+        return res.rowcount > 0

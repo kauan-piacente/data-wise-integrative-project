@@ -1,13 +1,17 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import AppHeader from "../components/AppHeader.vue";
+import LoadingSkeleton from "../components/LoadingSkeleton.vue";
 import { useUploadStore } from "../store/uploadStore.js";
 
 const upload = useUploadStore();
+const carregando = ref(false);
 
 onMounted(async () => {
     if (!upload.estatisticas) {
+        carregando.value = true;
         await upload.carregarUltimoLote();
+        carregando.value = false;
     }
 });
 
@@ -17,60 +21,61 @@ const qualidadeEtl = computed(() => upload.estatisticas?.qualidade || null);
 <template>
     <AppHeader />
 
-    <main class="bg-[#f8fafc] min-h-screen px-page py-12">
-        <div class="flex justify-between items-end mb-8">
+    <main class="bg-palette-offwhite min-h-screen px-page py-8 sm:py-10">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
             <div>
-                <h1 class="text-3xl font-extrabold text-palette-chumbo">Relatório de Validação e Qualidade</h1>
-                <p class="text-sm text-gray-500 mt-1">
-                    Arquivo analisado: <strong>{{ upload.nomeArquivo || 'Nenhum' }}</strong>
-                    <span v-if="upload.dataUploadFormatada"> | Data de Upload: {{ upload.dataUploadFormatada }}</span>
-                    <span v-if="upload.loteId"> | Lote #{{ upload.loteId }}</span>
+                <h1 class="page-title">Relatório de <span class="text-palette-mid-green">Validação</span></h1>
+                <p class="page-subtitle">
+                    Arquivo: <strong class="font-medium text-palette-chumbo">{{ upload.nomeArquivo || 'Nenhum' }}</strong>
+                    <span v-if="upload.dataUploadFormatada"> · {{ upload.dataUploadFormatada }}</span>
                 </p>
             </div>
-            <RouterLink to="/uploads" class="text-sm font-semibold text-[#52796F] underline">
-                Voltar para Upload
+            <RouterLink to="/uploads" class="text-sm font-semibold text-[#3f5f5a] hover:text-palette-mid-green hover:underline">
+                ← Voltar para Upload
             </RouterLink>
         </div>
 
-        <div v-if="!upload.temDados" class="bg-white p-8 rounded-xl border border-gray-200 text-center">
-            <p class="text-gray-500">Nenhum dado para exibir. Volte e faça o upload de uma planilha.</p>
+        <LoadingSkeleton v-if="carregando" variant="relatorio" />
+
+        <div v-else-if="!upload.temDados" class="card p-10 text-center">
+            <p class="text-sm font-light text-gray-500">Nenhum dado para exibir. Volte e envie uma planilha.</p>
         </div>
 
         <template v-else>
             <!-- Resumo (Cards) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm text-center">
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">Total de Registros</p>
-                    <p class="text-3xl font-bold text-palette-chumbo mt-1">{{ upload.totalRegistros }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="card p-5 text-center">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total de Registros</p>
+                    <p class="text-3xl font-extrabold text-palette-chumbo mt-1">{{ upload.totalRegistros }}</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-[#84A98C] shadow-sm text-center">
-                    <p class="text-xs text-[#52796F] uppercase tracking-wide">Registros Válidos</p>
-                    <p class="text-3xl font-bold text-[#52796F] mt-1">{{ upload.registrosValidos }}</p>
+                <div class="card p-5 text-center">
+                    <p class="text-xs font-medium text-[#3f5f5a] uppercase tracking-wide">Registros Válidos</p>
+                    <p class="text-3xl font-extrabold text-palette-mid-green mt-1">{{ upload.registrosValidos }}</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-red-200 shadow-sm text-center">
-                    <p class="text-xs text-red-500 uppercase tracking-wide">Registros Recusados</p>
-                    <p class="text-3xl font-bold text-red-600 mt-1">{{ upload.registrosComErro }}</p>
+                <div class="card p-5 text-center">
+                    <p class="text-xs font-medium text-red-500 uppercase tracking-wide">Registros Recusados</p>
+                    <p class="text-3xl font-extrabold text-red-600 mt-1">{{ upload.registrosComErro }}</p>
                 </div>
             </div>
 
-            <!-- Padronizações realizadas pelo ETL em Python -->
-            <div v-if="qualidadeEtl" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
-                <h3 class="text-lg font-bold text-palette-chumbo mb-4">Padronizações Automáticas do ETL (Python):</h3>
+            <!-- Padronizações automáticas realizadas -->
+            <div v-if="qualidadeEtl" class="card p-6 mb-6">
+                <h2 class="section-title mb-4">Ajustes automáticos realizados na importação</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-[#f8fafc] p-4 rounded-lg border border-gray-100">
-                        <p class="text-xs text-gray-500">Segmentos padronizados</p>
-                        <p class="text-2xl font-bold text-[#52796F]">{{ qualidadeEtl.correcoesSegmento || 0 }}</p>
+                    <div class="bg-palette-offwhite p-4 rounded-xl border border-gray-100">
+                        <p class="text-xs font-light text-gray-500">Segmentos padronizados</p>
+                        <p class="text-2xl font-extrabold text-[#3f5f5a]">{{ qualidadeEtl.correcoesSegmento || 0 }}</p>
                     </div>
-                    <div class="bg-[#f8fafc] p-4 rounded-lg border border-gray-100">
-                        <p class="text-xs text-gray-500">Consultores padronizados</p>
-                        <p class="text-2xl font-bold text-[#52796F]">{{ qualidadeEtl.correcoesConsultor || 0 }}</p>
+                    <div class="bg-palette-offwhite p-4 rounded-xl border border-gray-100">
+                        <p class="text-xs font-light text-gray-500">Consultores padronizados</p>
+                        <p class="text-2xl font-extrabold text-[#3f5f5a]">{{ qualidadeEtl.correcoesConsultor || 0 }}</p>
                     </div>
-                    <div class="bg-[#f8fafc] p-4 rounded-lg border border-gray-100">
-                        <p class="text-xs text-gray-500">Níveis padronizados</p>
-                        <p class="text-2xl font-bold text-[#52796F]">{{ qualidadeEtl.correcoesNivel || 0 }}</p>
+                    <div class="bg-palette-offwhite p-4 rounded-xl border border-gray-100">
+                        <p class="text-xs font-light text-gray-500">Níveis padronizados</p>
+                        <p class="text-2xl font-extrabold text-[#3f5f5a]">{{ qualidadeEtl.correcoesNivel || 0 }}</p>
                     </div>
                 </div>
-                <ul v-if="qualidadeEtl.avisos?.length" class="space-y-1 text-xs text-gray-600">
+                <ul v-if="qualidadeEtl.avisos?.length" class="space-y-1 text-xs font-light text-gray-600">
                     <li v-for="(aviso, i) in qualidadeEtl.avisos" :key="i">• {{ aviso }}</li>
                 </ul>
             </div>
