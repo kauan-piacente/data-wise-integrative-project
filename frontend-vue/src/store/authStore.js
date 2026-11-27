@@ -115,16 +115,17 @@ export const useAuthStore = defineStore("auth", {
 
         // Busca os dados completos do usuário logado (id, perfil, status, criadoEm) em /api/auth/me
         async carregarPerfil() {
-            if (!this.token || this.token === "token-local") return false
+            if (!this.token || this.token === "token-local") return { ok: false, expirada: false }
             try {
                 const resposta = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${this.token}` } })
-                if (!resposta.ok) return false
+                if (resposta.status === 401) return { ok: false, expirada: true }
+                if (!resposta.ok) return { ok: false, expirada: false }
                 const dados = await resposta.json()
                 this.usuario = { ...this.usuario, ...dados }
                 localStorage.setItem("usuario", JSON.stringify(this.usuario))
-                return true
+                return { ok: true, expirada: false }
             } catch {
-                return false
+                return { ok: false, expirada: false }
             }
         },
 
@@ -164,7 +165,7 @@ export const useAuthStore = defineStore("auth", {
                         return { ok: false, erro: detalhe || "Este e-mail já está em uso por outra conta." }
                     }
                     if (resposta.status === 401) {
-                        return { ok: false, erro: "Sessão expirada. Faça login novamente." }
+                        return { ok: false, expirada: true, erro: "Sua sessão expirou. Faça login novamente para salvar as alterações." }
                     }
                     if (resposta.status === 400) {
                         return { ok: false, erro: detalhe || "Dados inválidos. Verifique nome e e-mail." }
