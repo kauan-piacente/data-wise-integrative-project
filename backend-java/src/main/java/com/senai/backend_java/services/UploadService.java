@@ -2,7 +2,8 @@ package com.senai.backend_java.services;
 
 import static com.senai.backend_java.services.Colunas.*;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -112,8 +113,8 @@ public class UploadService {                                                    
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", rs.getLong("id"));
             m.put("arquivoNome", rs.getString("arquivo_nome"));
-            Timestamp env = rs.getTimestamp("enviado_em");
-            m.put("enviadoEm", env != null ? env.toInstant().toString() : null);
+            LocalDateTime env = rs.getObject("enviado_em", LocalDateTime.class);
+            m.put("enviadoEm", env != null ? env.toInstant(ZoneOffset.UTC).toString() : null);
             m.put("status", rs.getString("status"));
             m.put("totalLinhas", rs.getInt("total_linhas"));
             m.put("linhasValidas", rs.getInt("linhas_validas"));
@@ -152,8 +153,8 @@ public class UploadService {                                                    
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("loteId", rs.getLong("id"));
                     m.put("arquivoNome", rs.getString("arquivo_nome"));
-                    Timestamp env = rs.getTimestamp("enviado_em");
-                    m.put("enviadoEm", env != null ? env.toInstant().toString() : null);
+                    LocalDateTime env = rs.getObject("enviado_em", LocalDateTime.class);
+                    m.put("enviadoEm", env != null ? env.toInstant(ZoneOffset.UTC).toString() : null);
                     m.put("status", rs.getString("status"));
                     m.put("totalLinhas", rs.getInt("total_linhas"));
                     m.put("linhasValidas", rs.getInt("linhas_validas"));
@@ -170,6 +171,14 @@ public class UploadService {                                                    
             throw new ApiException(HttpStatus.NOT_FOUND, "Nenhum lote processado encontrado.");
         }
         return rows.get(0);
+    }
+
+    /** Remove um lote e todos os dados vinculados (clientes, contratos e estatísticas via CASCADE). */
+    public void removerLote(Long loteId) {
+        int removidos = jdbc.update("DELETE FROM upload_lote WHERE id = ?", loteId);
+        if (removidos == 0) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Planilha não encontrada.");
+        }
     }
 
     private Map<String, Object> paraPython(ResultadoLinha r) {
