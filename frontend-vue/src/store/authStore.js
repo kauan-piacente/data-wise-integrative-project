@@ -193,6 +193,58 @@ export const useAuthStore = defineStore("auth", {
             }
         },
 
+        // Solicita um código temporário para redefinir a senha (/api/auth/esqueci-senha)
+        async solicitarRecuperacao(email) {
+            this.carregando = true
+            this.erro = ""
+
+            try {
+                const resposta = await fetch(`${API_URL}/auth/esqueci-senha`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                })
+
+                const dados = await resposta.json().catch(() => ({}))
+                if (!resposta.ok) {
+                    this.erro = dados.erro || dados.mensagem || "Não foi possível solicitar a recuperação de senha."
+                    return { ok: false }
+                }
+                return { ok: true, mensagem: dados.mensagem, codigoTeste: dados.codigoTeste || null }
+            } catch {
+                this.erro = "Não foi possível conectar ao servidor."
+                return { ok: false }
+            } finally {
+                this.carregando = false
+            }
+        },
+
+        // Valida o código e define a nova senha (/api/auth/redefinir-senha)
+        async redefinirSenha(email, codigo, novaSenha) {
+            this.carregando = true
+            this.erro = ""
+
+            try {
+                const resposta = await fetch(`${API_URL}/auth/redefinir-senha`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, codigo, novaSenha }),
+                })
+
+                const dados = await resposta.json().catch(() => ({}))
+                if (!resposta.ok) {
+                    this.erro = dados.erro || dados.mensagem || "Código inválido ou expirado."
+                    return { ok: false }
+                }
+                return { ok: true, mensagem: dados.mensagem }
+            } catch {
+                this.erro = "Não foi possível conectar ao servidor."
+                return { ok: false }
+            } finally {
+                this.carregando = false
+            }
+        },
+
         logout() {
             this.token = null
             this.usuario = null
