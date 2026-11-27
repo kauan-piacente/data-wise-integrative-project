@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from  '../views/Home.vue'
 import Login from  '../views/Login.vue'
 import Cadastro from  '../views/Cadastro.vue'
+import EsqueciSenha from '../views/EsqueciSenha.vue'
 import Contact from  '../views/Contact.vue'
 import Functionality from '../views/Functionality.vue'
 import Upload from '../views/Upload.vue'
@@ -17,6 +18,7 @@ const routes = [
     { path : '/', component: Home},
     { path : '/login', component: Login},
     { path : '/cadastro', component: Cadastro},
+    { path : '/esqueci-senha', component: EsqueciSenha},
     { path : '/contact', component: Contact},
     { path : '/functionality', component: Functionality},
     // Área logada (requer autenticação)
@@ -52,7 +54,7 @@ router.beforeEach((to) => {
     if (MODO_SEM_BACKEND) return true
     const auth = useAuthStore()
     if (to.meta.requerAuth && !auth.estaAutenticado) return '/login'
-    if ((to.path === '/login' || to.path === '/cadastro') && auth.estaAutenticado) return '/dashboard'
+    if ((to.path === '/login' || to.path === '/cadastro' || to.path === '/esqueci-senha') && auth.estaAutenticado) return '/dashboard'
 })
 
 export default router

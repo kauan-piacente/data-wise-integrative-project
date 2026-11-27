@@ -87,9 +87,9 @@ async function enviar() {
             </p>
           </div>
 
-          <a href="#" class="mt-6 self-center text-[11px] text-palette-gray underline hover:text-palette-mid-green">
+          <RouterLink to="/esqueci-senha" class="mt-6 self-center text-[11px] text-palette-gray underline hover:text-palette-mid-green">
             Esqueci a senha
-          </a>
+          </RouterLink>
 
           <p class="mt-3 text-center text-[11px] text-palette-gray">
             Não tem uma conta?

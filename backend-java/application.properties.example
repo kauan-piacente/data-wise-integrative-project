@@ -19,6 +19,8 @@ spring.web.error.include-message=always
 # NUNCA use a chave de exemplo em producao; defina a variavel de ambiente JWT_SECRET.
 app.jwt.secret=${JWT_SECRET:QGNjUmZVallYbjJyNXU4eC9BP0QoRytLYlBkU2dWa1k=}
 app.jwt.expiration-minutes=60
+# Em producao mantenha false (o codigo sera enviado por e-mail / log). Em desenvolvimento local pode usar true.
+app.auth.expor-codigo-recuperacao=${EXPOR_CODIGO_RECUPERACAO:false}
 
 # Administrador inicial (criado ja APROVADO na primeira subida, se o e-mail nao existir)
 app.admin.nome=Administrador
