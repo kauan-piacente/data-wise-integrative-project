@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .accessDeniedHandler((req, res, erro) -> res.sendError(HttpServletResponse.SC_FORBIDDEN)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/cadastro", "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/cadastro", "/api/auth/login", "/api/auth/esqueci-senha", "/api/auth/redefinir-senha").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/publico", "/api/public").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
