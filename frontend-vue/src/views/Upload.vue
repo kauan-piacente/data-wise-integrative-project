@@ -1,11 +1,14 @@
 <script setup>
 import AppHeader from "../components/AppHeader.vue";
+import ConfirmModal from "../components/ConfirmModal.vue";
 import uploadIcon from "../assets/upload_images/upload_icon.png";
 import { ref } from "vue";
 import { useUploadStore, formatarTamanho, formatarDataHora } from "../store/uploadStore.js";
 
 const upload = useUploadStore();
 const fileInput = ref(null);
+const removendoId = ref(null);
+const arquivoParaRemover = ref(null);
 
 function abrirSeletor() {
     if (!upload.carregando) fileInput.value?.click();
@@ -16,6 +19,28 @@ async function aoSelecionaArquivo(event) {
     event.target.value = ""; // limpa o input para permitir reenviar o mesmo arquivo
     if (file) {
         await upload.processarPlanilha(file);
+    }
+}
+
+function pedirRemocao(arq) {
+    arquivoParaRemover.value = arq;
+}
+
+async function confirmarRemocao() {
+    const arq = arquivoParaRemover.value;
+    if (!arq) return;
+
+    removendoId.value = arq.id;
+    try {
+        if (arq.loteId) {
+            const ok = await upload.removerLote(arq.loteId);
+            if (!ok) upload.removerArquivoLocal(arq.id);
+        } else {
+            upload.removerArquivoLocal(arq.id);
+        }
+    } finally {
+        removendoId.value = null;
+        arquivoParaRemover.value = null;
     }
 }
 </script>
@@ -29,24 +54,25 @@ async function aoSelecionaArquivo(event) {
             <input ref="fileInput" type="file" class="hidden" accept=".xlsx, .xls, .csv" @change="aoSelecionaArquivo" />
             <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
                 <div>
-                    <h1 class="text-2xl sm:text-4xl font-extrabold text-palette-chumbo leading-tight mb-1">Upload do arquivo</h1>
-                    <h2 class="text-base font-light text-palette-chumbo leading-tight">
-                        Clique para carregar a planilha e processar automaticamente no ETL em Python
-                    </h2>
+                    <h1 class="page-title">Upload de <span class="text-palette-mid-green">planilha</span></h1>
+                    <p class="page-subtitle">
+                        Envie sua planilha de clientes para atualizar seus indicadores e gráficos automaticamente
+                    </p>
                 </div>
                 <a href="/planilha-modelo-clientes.csv" download="planilha-modelo-clientes.csv"
-                    class="inline-flex items-center gap-2 text-sm font-semibold text-[#52796F] bg-[#84A98C]/15 hover:bg-[#84A98C]/25 px-4 py-2 rounded-lg transition-colors">
-                    Baixar planilha modelo (.csv)
+                    title="Arquivo de exemplo com as colunas esperadas para você preencher antes de importar"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-[#3f5f5a] bg-white border border-gray-200 hover:border-palette-mid-green/60 hover:bg-palette-mid-green/5 px-4 py-2 rounded-lg transition-colors">
+                    Baixar modelo de exemplo (.csv)
                 </a>
             </div>
 
-            <div class="flex flex-col items-center justify-center bg-white rounded-2xl border-2 border-dashed border-[#84A98C] cursor-pointer py-12 hover:bg-[#f8faf9] transition-colors"
+            <div class="flex flex-col items-center justify-center bg-white rounded-2xl border-2 border-dashed border-palette-mid-green/70 cursor-pointer py-12 hover:bg-palette-mid-green/5 transition-colors"
                 :class="{ 'opacity-50 cursor-wait': upload.carregando }" @click="abrirSeletor">
                 <img :src="uploadIcon" alt="Imagem de Upload" class="mb-4">
-                <h2 class="font-light text-palette-chumbo">
-                    <span class="text-[#52796F] font-bold underline">Escolha um Arquivo</span>
-                </h2>
-                <h3 class="text-sm text-gray-500 mt-2">Formatos aceitos: XLSX, XLS, CSV</h3>
+                <p class="font-light text-palette-chumbo">
+                    <span class="text-[#3f5f5a] font-semibold underline">Escolha um arquivo</span> ou clique aqui para enviar
+                </p>
+                <p class="text-xs text-gray-500 mt-2">Formatos aceitos: XLSX, XLS e CSV</p>
             </div>
 
             <p v-if="upload.mensagemErro" class="mt-4 text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-sm">
@@ -69,13 +95,13 @@ async function aoSelecionaArquivo(event) {
             </div>
 
             <!-- Cards de Histórico de Arquivos -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8" v-if="upload.historicoArquivos.length > 0">
-                <div v-for="arq in upload.historicoArquivos.slice(0, 4)" :key="arq.id" class="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                    <div class="bg-[#1FB35B] text-white text-[10px] font-bold rounded flex items-center justify-center w-10 h-10 uppercase">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8" v-if="upload.historicoArquivos.length > 0">
+                <div v-for="arq in upload.historicoArquivos.slice(0, 4)" :key="arq.id" class="card p-4 flex items-center gap-4">
+                    <div class="bg-palette-mid-green/15 text-[#3f5f5a] text-[10px] font-bold rounded-lg flex items-center justify-center w-10 h-10 uppercase shrink-0">
                         {{ arq.extensao }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-palette-chumbo truncate">{{ arq.nome }}</p>
+                        <p class="text-sm font-semibold text-palette-chumbo truncate">{{ arq.nome }}</p>
                         <div class="flex flex-wrap items-center text-xs text-gray-500 mt-1 gap-2">
                             <span v-if="arq.status === 'Completo'">
                                 {{ formatarTamanho(arq.tamanhoBytes) }}
@@ -84,26 +110,33 @@ async function aoSelecionaArquivo(event) {
                                 {{ formatarTamanho(arq.tamanhoBytes * (arq.progresso / 100)) }} de {{ formatarTamanho(arq.tamanhoBytes) }}
                             </span>
 
-                            <span class="flex items-center gap-1 font-semibold" :class="arq.status === 'Completo' ? 'text-green-600' : (arq.status === 'Erro' ? 'text-red-500' : 'text-gray-500')">
+                            <span class="flex items-center gap-1 font-medium" :class="arq.status === 'Completo' ? 'text-green-700' : (arq.status === 'Erro' ? 'text-red-500' : 'text-gray-500')">
                                 <template v-if="arq.status === 'Carregando'">
                                     <span class="inline-block w-3 h-3 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></span>
                                     Carregando
                                 </template>
                                 <template v-else-if="arq.status === 'Completo'">
-                                    <span class="inline-flex items-center justify-center w-3.5 h-3.5 bg-green-500 text-white rounded-full text-[9px]">✓</span>
-                                    Completo
+                                    <span class="inline-flex items-center justify-center w-3.5 h-3.5 bg-palette-mid-green text-white rounded-full text-[9px]">✓</span>
+                                    Enviado
                                 </template>
                                 <template v-else>
                                     Erro
                                 </template>
                             </span>
 
-                            <span v-if="arq.dataUpload"> | {{ formatarDataHora(arq.dataUpload) }}</span>
+                            <span v-if="arq.dataUpload">· {{ formatarDataHora(arq.dataUpload) }}</span>
                         </div>
                         <p v-if="arq.status === 'Erro' && arq.mensagemErro" class="text-xs text-red-500 mt-1">
                             {{ arq.mensagemErro }}
                         </p>
                     </div>
+                    <button type="button" @click="pedirRemocao(arq)" :disabled="removendoId === arq.id"
+                        :aria-label="`Remover ${arq.nome}`" title="Remover planilha"
+                        class="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 disabled:opacity-40 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
             </div>
             <RouterLink v-if="upload.historicoArquivos.length > 0" to="/historico" class="inline-block mt-4 text-sm font-semibold text-[#52796F] hover:underline">Ver histórico completo →</RouterLink>
@@ -155,6 +188,19 @@ async function aoSelecionaArquivo(event) {
             <p class="text-xs text-gray-500 mt-2 text-right">Mostrando amostra dos dados (até 10 linhas).</p>
         </section>
     </main>
+
+    <ConfirmModal
+        :aberto="!!arquivoParaRemover"
+        titulo="Remover planilha"
+        :mensagem="arquivoParaRemover?.loteId
+            ? `Tem certeza de que deseja remover '${arquivoParaRemover.nome}.${arquivoParaRemover.extensao.toLowerCase()}'? Os dados e indicadores desta planilha também serão excluídos.`
+            : `Remover '${arquivoParaRemover?.nome}.${arquivoParaRemover?.extensao?.toLowerCase()}' da lista de envios recentes?`"
+        texto-confirmar="Remover"
+        variante="danger"
+        :carregando="!!removendoId"
+        @confirmar="confirmarRemocao"
+        @cancelar="arquivoParaRemover = null"
+    />
 </template>
 
 <style scoped></style>
