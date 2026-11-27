@@ -96,6 +96,10 @@ export function formatarTamanho(bytes) {
 
 export function formatarDataHora(data) {
     if (!data) return ""
+    // Se vier uma string ISO sem fuso horário (ex.: "2026-11-27T00:57:00"), trata como UTC
+    if (typeof data === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(data) && !/[zZ]|[+-]\d{2}:\d{2}$/.test(data)) {
+        return new Date(data + "Z").toLocaleString("pt-BR")
+    }
     return new Date(data).toLocaleString("pt-BR")
 }
 
@@ -381,7 +385,12 @@ export const useUploadStore = defineStore("upload", {
             this.salvarHistoricoLocal()
         },
 
-        // Lista os lotes gravados no banco: Java (/api/uploads/lotes) ou Python (/lotes)
+        removerArquivoLocal(id) {
+            this.historicoArquivos = this.historicoArquivos.filter((a) => a.id !== id)
+            this.salvarHistoricoLocal()
+        },
+
+        // Lista as planilhas salvas no servidor: Java (/api/uploads/lotes) ou Python (/lotes)
         async carregarLotes() {
             this.lotesCarregando = true
             this.lotesErro = ""
@@ -395,11 +404,36 @@ export const useUploadStore = defineStore("upload", {
                         }
                     } catch { /* tenta o próximo serviço */ }
                 }
-                this.lotesErro = "Não foi possível conectar ao backend Java nem à API Python para consultar os lotes gravados."
+                this.lotesErro = "Não foi possível carregar suas planilhas salvas. Verifique sua conexão e tente novamente."
                 return false
             } finally {
                 this.lotesCarregando = false
             }
+        },
+
+        // Remove uma planilha salva do servidor e atualiza o estado local
+        async removerLote(id) {
+            let removido = false
+            for (const url of [`${API_URL}/uploads/${id}`, `${ETL_API_URL}/lotes/${id}`]) {
+                try {
+                    const resp = await fetch(url, { method: "DELETE", headers: cabecalhosAuth() })
+                    if (resp.ok || resp.status === 204) {
+                        removido = true
+                        break
+                    }
+                } catch { /* tenta o próximo serviço */ }
+            }
+            if (!removido) return false
+
+            this.lotes = this.lotes.filter((l) => l.id !== id)
+            this.historicoArquivos = this.historicoArquivos.filter((a) => a.loteId !== id)
+            this.salvarHistoricoLocal()
+
+            if (this.loteId === id) {
+                this.limpar()
+                await this.carregarUltimoLote()
+            }
+            return true
         },
 
         // Abre um lote específico do banco e torna suas estatísticas as ativas no Dashboard/Insights
@@ -541,7 +575,7 @@ export const useUploadStore = defineStore("upload", {
                     } else {
                         await this.carregarUltimoLote()
                     }
-                    this.mensagemSucesso = `ETL concluído no Azure PostgreSQL${this.loteId ? ` (Lote #${this.loteId})` : ""}: ${dados.linhasValidas} clientes processados.`
+                    this.mensagemSucesso = `Planilha importada com sucesso! ${dados.linhasValidas} clientes analisados e salvos.`
                     return "java"
                 }
             } catch {
@@ -578,7 +612,7 @@ export const useUploadStore = defineStore("upload", {
                     const dadosPy = await respPy.json()
                     this.loteId = dadosPy.loteId || null
                     this.estatisticas = dadosPy.estatisticas || null
-                    this.mensagemSucesso = `ETL concluído no Azure PostgreSQL${this.loteId ? ` (Lote #${this.loteId})` : ""}: ${validas.length} clientes processados.`
+                    this.mensagemSucesso = `Planilha importada com sucesso! ${validas.length} clientes analisados e salvos.`
                     return "python"
                 }
             } catch {
